@@ -205,3 +205,22 @@ cython_debug/
 marimo/_static/
 marimo/_lsp/
 __marimo__/
+
+# From BEVCalib
+.vscode/
+**/.venv/
+pose-data/
+__pycache__/
+data/
+logs/
+**.pth
+*.pt
+wandb/
+*results*/
+*ckpts/
+*.avi
+*.pyc
+
+**/build/**
+**/*.so
+**/.idea
