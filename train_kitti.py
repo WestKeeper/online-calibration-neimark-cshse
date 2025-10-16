@@ -81,7 +81,7 @@ def parse_args():
     parser.add_argument("--num_epochs", type=int,
                         default=config_dict.get('num_epochs', 1))
     parser.add_argument("--eval_epoches", type=int,
-                        default=config_dict.get('eval_epoches', 4))
+                        default=config_dict.get('eval_epoches', 10))
     parser.add_argument("--deformable", type=int,
                         default=config_dict.get('deformable', -1))
     parser.add_argument("--bev_encoder", type=int,
@@ -91,19 +91,20 @@ def parse_args():
     parser.add_argument("--batch_size", type=int,
                         default=config_dict.get('batch_size', 4))
     parser.add_argument("--lr", type=float,
-                        default=config_dict.get('lr', 5e-5))
+                        default=config_dict.get('lr', 1e-4))
     parser.add_argument("--wd", type=float,
                         default=config_dict.get('wd', 1e-4))
     parser.add_argument("--step_size", type=int,
-                        default=config_dict.get('step_size', 100))
+                        default=config_dict.get('step_size', 80))
     parser.add_argument("--scheduler", type=int,
-                        default=config_dict.get('scheduler', -1))
+                        default=config_dict.get('scheduler', 1))
     parser.add_argument("--train_val_split", type=float,
                         default=config_dict.get('train_val_split', 0.7))
     parser.add_argument("--train_test_split", type=float,
                         default=config_dict.get('train_test_split', 0.8))
 
     parser.add_argument("--split_seed", type=int, default=42)
+    parser.add_argument("--perturb_seed", type=int, default=-1)
     parser.add_argument("--num_samples", type=int, default=0)
     parser.add_argument("--pretrain_ckpt", type=str, default=None)
     parser.add_argument("--config", type=str, default=config_args.config)
@@ -210,6 +211,9 @@ def main():
         "angle_range_deg": args.eval_angle_range_deg if args.eval_angle_range_deg is not None else train_noise["angle_range_deg"],
         "trans_range": args.eval_trans_range if args.eval_trans_range is not None else train_noise["trans_range"],
     }
+    
+    if args.perturb_seed > 0:
+        np.random.seed(args.perturb_seed)
 
     for epoch in range(num_epochs):
         model.train()
@@ -278,7 +282,7 @@ def main():
 
         translation_errors, rotation_errors = [], []
 
-        if epoch % args.eval_epoches == 0:
+        if (epoch + 1) % args.eval_epoches == 0:
             eval_trans_range = eval_noise["trans_range"]
             eval_angle_range = eval_noise["angle_range_deg"]
             model.eval()
@@ -327,6 +331,14 @@ def main():
 
             print("  Validation translation xyz error: ", np.mean(translation_errors, axis=0))
             print("  Validation rotation ypr error: ", np.mean(rotation_errors, axis=0))
+            
+            writer.add_scalar(f"Metric/val/error/x", np.mean(translation_errors, axis=0)[0], epoch)
+            writer.add_scalar(f"Metric/val/error/y", np.mean(translation_errors, axis=0)[1], epoch)
+            writer.add_scalar(f"Metric/val/error/z", np.mean(translation_errors, axis=0)[2], epoch)
+            
+            writer.add_scalar(f"Metric/val/error/yaw", np.mean(rotation_errors, axis=0)[0], epoch)
+            writer.add_scalar(f"Metric/val/error/pitch", np.mean(rotation_errors, axis=0)[1], epoch)
+            writer.add_scalar(f"Metric/val/error/roll", np.mean(rotation_errors, axis=0)[2], epoch)
 
             val_loss = None
             loss = None
