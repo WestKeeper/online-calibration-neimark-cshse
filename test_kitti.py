@@ -56,6 +56,7 @@ def parse_args():
 
     # Параметры вне конфига
     parser.add_argument("--split_seed", type=int, default=42)
+    parser.add_argument("--perturb_seed", type=int, default=-1)
     parser.add_argument("--num_samples", type=int, default=0)
     parser.add_argument("--vizualize", type=int, default=0)
     parser.add_argument("--config", type=str, default=config_args.config)
@@ -74,7 +75,7 @@ def main():
     vis_dir = os.path.join(log_dir, "projections")
     os.makedirs(vis_dir, exist_ok=True)
 
-    dataset = KittiDataset(args.dataset_root, ['00', '01'])
+    dataset = KittiDataset(args.dataset_root, ['00', '01', '02', '03'])
     generator = torch.Generator().manual_seed(args.split_seed)
 
     # Если num_samples > 0, выбираем случайное подмножество данных
@@ -133,6 +134,9 @@ def main():
 
     eval_angle = np.array([args.test_angle_range_deg])
     eval_trans_range = np.array([args.test_trans_range])
+    
+    if args.perturb_seed > 0:
+        np.random.seed(args.perturb_seed)
 
     for angle, trans in zip(eval_angle, eval_trans_range):
         print(f"\nEvaluating perturb   angle {angle},  trans {trans}")

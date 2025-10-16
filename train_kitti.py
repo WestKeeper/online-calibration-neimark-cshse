@@ -282,7 +282,7 @@ def main():
 
         translation_errors, rotation_errors = [], []
 
-        if (epoch + 1) % args.eval_epoches == 0:
+        if (epoch + 1) % args.eval_epoches == 0 or epoch == num_epochs - 1:
             eval_trans_range = eval_noise["trans_range"]
             eval_angle_range = eval_noise["angle_range_deg"]
             model.eval()
